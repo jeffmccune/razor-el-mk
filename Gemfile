@@ -3,6 +3,8 @@
 source 'https://rubygems.org'
 
 gem 'facter'
+gem 'rake'
+gem 'thor'
 
 group :test do
   gem 'rspec', '~> 2.13.0'
