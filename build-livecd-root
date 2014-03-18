@@ -37,6 +37,29 @@ livecd-creator -v --cache /var/cache/microkernel --config $srcdir/microkernel.ks
 echo "* Converting to initrd"
 livecd-iso-to-pxeboot $tmpdir/microkernel.iso || KEEP_TMPDIR=yes
 
+## Work around dracut not configuring udev correctly for the loopback kernel module
+## See: http://git.kernel.org/cgit/boot/dracut/dracut.git/commit/?id=ba9368fa4fedda0f72d84f910d01d7da201405a3
+echo "* Applying initrd_patches/*.patch to the initrd"
+mkdir $tmpdir/initrd_root
+# Unpack the first archive, which is the initramfs.  The ISO is second.
+gzip -d -c tftpboot/initrd0.img | (cd $tmpdir/initrd_root; cpio -id)
+# Apply all patches
+for patch in $srcdir/initrd_patches/*.patch; do
+  echo "* Applying $(basename $patch) ..."
+  (cd "$tmpdir"/initrd_root; patch -p0) < $patch
+done
+# rebuild the PXE initrd by appending the ISO file
+echo "* Rebuilding the patched kernel initrd image"
+( cd "$tmpdir/initrd_root";
+  find . \
+  | cpio --create --format='newc' \
+  | gzip -c -9 ) \
+    > "$tmpdir"/initrd.gz
+echo "* Rebuilding tftpboot/initrd0.img"
+( cd "$tmpdir" && echo "microkernel.iso" | cpio -H newc --quiet -L -o ) |
+  gzip -9 |
+  cat "$tmpdir"/initrd.gz - > tftpboot/initrd0.img
+
 echo "* Building tarball"
 mkdir microkernel
 mv tftpboot/initrd0.img tftpboot/vmlinuz0 microkernel || KEEP_TMPDIR=yes

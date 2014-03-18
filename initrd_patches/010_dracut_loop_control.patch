@@ -1,0 +1,9 @@
+--- lib/dracut/hooks/pre-udev/30-dmsquash-liveiso-genrules.sh.bak	2014-03-18 20:16:01.472869714 -0700
++++ lib/dracut/hooks/pre-udev/30-dmsquash-liveiso-genrules.sh	2014-03-18 20:16:49.779746408 -0700
+@@ -4,5 +4,5 @@
+ if [ "${root%%:*}" = "liveiso" ]; then
+     {
+-        printf 'KERNEL=="loop0", RUN+="/sbin/initqueue --settled --onetime --unique /sbin/dmsquash-live-root `/sbin/losetup -f --show %s`"\n' \
++        printf 'KERNEL=="loop-control", RUN+="/sbin/initqueue --settled --onetime --unique /sbin/dmsquash-live-root `/sbin/losetup -f --show %s`"\n' \
+             ${root#liveiso:}
+     } >> /etc/udev/rules.d/99-liveiso-mount.rules
